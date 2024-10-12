@@ -1,4 +1,4 @@
-# Borohydride-Hydrogen-Storage-Prediction-Tool
+# 硼氢化物储氢性质预测工具
 ## 1. 项目概述
 - **项目名称**: 硼氢化物储氢性质预测工具
 - **开发语言**: Python 3.11
