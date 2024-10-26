@@ -1,7 +1,7 @@
 import pandas as pd
 import tkinter as tk
 import os
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox,ttk
 
 from models import train, predictor
 from features.feature_extraction import extract_features, extract_target
@@ -10,34 +10,113 @@ class BorohydridePredictionTool:
     def __init__(self, root):
         self.root = root
         self.root.title("Borohydride Hydrogen Storage Property Prediction Tool")
-        self.root.geometry("500x400")
+        self.root.geometry("800x400")
+        self.root.configure(bg="#f0f4f8")
 
-        #设置导入数据按钮
-        self.import_button = tk.Button(root, text="Import Data", command=self.import_data)
-        self.import_button.pack(pady=10)
+        # 标题标签
+        title_label = tk.Label(
+            root,
+            text="Borohydride Property Prediction Tool",
+            font=("Helvetica", 16, "bold"),
+            bg="#f0f4f8",
+            fg="#333"
+        )
+        title_label.grid(row=0, column=0, columnspan=3, pady=10)
 
-        # 模型选择下拉框
-        self.model_var = tk.StringVar(root)
-        self.model_var.set("Choose Model")  # 默认值
-        self.model_dropdown = tk.OptionMenu(root, self.model_var, "Linear",
-                                            "SVM",
-                                            "Decision_tree",
-                                            "Random_forest",
-                                            "Lasso",
-                                            'Ridge')
-        self.model_dropdown.pack(pady=10)
+        # 导入数据按钮
+        import_btn = tk.Button(
+            root,
+            text="Import Data",
+            command=self.import_data,
+            font=("Helvetica", 12),
+            bg="#4CAF50",
+            fg="white",
+            padx=10,
+            pady=5
+        )
+        import_btn.grid(row=2, column=0, pady=10, padx=5)
 
-        # 开始预测按钮
-        self.predict_button = tk.Button(root, text="Start Prediction", command=self.run_prediction)
-        self.predict_button.pack(pady=10)
+        # 模型选择框
+        model_label = tk.Label(
+            root,
+            text="Select Model:",
+            font=("Helvetica", 12),
+            bg="#f0f4f8",
+            fg="#333"
+        )
+        model_label.grid(row=1, column=0, padx=5, sticky="e")
+        self.model_var = tk.StringVar(value="Choose Model")
+        model_menu = ttk.Combobox(
+            root,
+            textvariable=self.model_var,
+            values=["Linear", "SVM", "Decision_tree", "Random_forest", "Lasso", "Ridge"],
+            font=("Helvetica", 11),
+            state="readonly"
+        )
+        model_menu.grid(row=1, column=1, columnspan=2, sticky="w", padx=5, pady=5)
+
+        # 预测性质选择标签和选择框
+        property_label = tk.Label(
+            root,
+            text="Select Property:",
+            font=("Helvetica", 12),
+            bg="#f0f4f8",
+            fg="#333"
+        )
+        property_label.grid(row=1, column=2, padx=5, sticky="e")
+
+        self.property_var = tk.StringVar(value="Hydrogen Bond Length")
+        property_menu = ttk.Combobox(
+            root,
+            textvariable=self.property_var,
+            values=["Hydrogen Bond Length"],  # 当前只包含一个选项
+            font=("Helvetica", 11),
+            state="readonly"
+        )
+        property_menu.grid(row=1, column=3, sticky="w", padx=5, pady=5)
+
+        # 运行预测按钮
+        predict_btn = tk.Button(
+            root,
+            text="Run Prediction",
+            command=self.run_prediction,
+            font=("Helvetica", 12),
+            bg="#2196F3",
+            fg="white",
+            padx=10,
+            pady=5
+        )
+        predict_btn.grid(row=2, column=1, pady=10, padx=5)
 
         # 导出结果按钮
-        self.export_button = tk.Button(root, text="Export Results", command=self.export_results)
-        self.export_button.pack(pady=10)
+        export_btn = tk.Button(
+            root,
+            text="Export Results",
+            command=self.export_results,
+            font=("Helvetica", 12),
+            bg="#FF5722",
+            fg="white",
+            padx=10,
+            pady=5
+        )
+        export_btn.grid(row=2, column=2, pady=10, padx=5)
 
-        # 结果显示区域
-        self.result_label = tk.Label(root, text="", wraplength=400)
-        self.result_label.pack(pady=20)
+        # 预测结果显示区域
+        self.result_label = tk.Label(
+            root,
+            text="Predictions will be displayed here",
+            font=("Helvetica", 10),
+            bg="#e0e0e0",
+            fg="#333",
+            relief="sunken",
+            height=8,
+            width=60,
+            anchor="nw",
+            justify="left",
+            padx=5,
+            pady=5
+        )
+        self.result_label.grid(row=3, column=0, columnspan=3, pady=10, padx=5)
 
         self.data = None
         self.model = None
