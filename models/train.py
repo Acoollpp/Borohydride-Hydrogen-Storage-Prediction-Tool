@@ -39,7 +39,7 @@ def lasso(features, target):
     model = Lasso()
     grid_search = GridSearchCV(model, param_grid, cv=5, scoring='neg_mean_squared_error')
     grid_search.fit(X_train, y_train)
-    model = Lasso(grid_search.best_params_)
+    model = Lasso(**grid_search.best_params_)
     model.fit(X_train, y_train)
     return model
 
@@ -50,6 +50,6 @@ def ridge(features, target):
     model = Ridge()
     grid_search = GridSearchCV(model, param_grid, cv=5, scoring='neg_mean_squared_error')
     grid_search.fit(X_train, y_train)
-    model = Ridge(grid_search.best_params_)
+    model = Ridge(**grid_search.best_params_)
     model.fit(X_train, y_train)
     return model

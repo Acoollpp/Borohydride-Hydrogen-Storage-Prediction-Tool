@@ -10,116 +10,175 @@ class BorohydridePredictionTool:
     def __init__(self, root):
         self.root = root
         self.root.title("Borohydride Hydrogen Storage Property Prediction Tool")
-        self.root.geometry("800x400")
-        self.root.configure(bg="#f0f4f8")
+        self.root.geometry("860x520")
+        self.root.configure(bg="#e8ecf5")
+        self.root.resizable(False, False)
 
-        # 标题标签
+        # 样式与容器
+        button_base = {
+            "font": ("Segoe UI", 11, "bold"),
+            "width": 14,
+            "padx": 8,
+            "pady": 10,
+            "relief": "flat",
+            "cursor": "hand2"
+        }
+
+        container = tk.Frame(self.root, bg="#ffffff", bd=0, highlightthickness=0)
+        container.place(relx=0.5, rely=0.5, anchor="center", width=760, height=420)
+
+        header = tk.Frame(container, bg="#ffffff")
+        header.pack(fill="x", padx=30, pady=(25, 15))
+
         title_label = tk.Label(
-            root,
+            header,
             text="Borohydride Property Prediction Tool",
-            font=("Helvetica", 16, "bold"),
-            bg="#f0f4f8",
-            fg="#333"
+            font=("Segoe UI", 20, "bold"),
+            bg="#ffffff",
+            fg="#1f3c88"
         )
-        title_label.grid(row=0, column=0, columnspan=3, pady=10)
+        title_label.pack(anchor="w")
 
-        # 导入数据按钮
-        import_btn = tk.Button(
-            root,
-            text="Import Data",
-            command=self.import_data,
-            font=("Helvetica", 12),
-            bg="#4CAF50",
-            fg="white",
-            padx=10,
-            pady=5
+        subtitle_label = tk.Label(
+            header,
+            text="Upload data, choose a model, and generate hydrogen bond predictions.",
+            font=("Segoe UI", 11),
+            bg="#ffffff",
+            fg="#6e7a96"
         )
-        import_btn.grid(row=2, column=0, pady=10, padx=5)
+        subtitle_label.pack(anchor="w", pady=(6, 0))
 
-        # 模型选择框
+        controls = tk.Frame(container, bg="#ffffff")
+        controls.pack(fill="x", padx=30, pady=(0, 20))
+        controls.grid_columnconfigure(1, weight=1)
+        controls.grid_columnconfigure(3, weight=1)
+
         model_label = tk.Label(
-            root,
-            text="Select Model:",
-            font=("Helvetica", 12),
-            bg="#f0f4f8",
-            fg="#333"
+            controls,
+            text="Select Model",
+            font=("Segoe UI", 11, "bold"),
+            bg="#ffffff",
+            fg="#53618a"
         )
-        model_label.grid(row=1, column=0, padx=5, sticky="e")
-        self.model_var = tk.StringVar(value="Choose Model")
+        model_label.grid(row=0, column=0, sticky="w")
+
+        self.model_var = tk.StringVar(value="Linear")
         model_menu = ttk.Combobox(
-            root,
+            controls,
             textvariable=self.model_var,
             values=["Linear", "SVM", "Decision_tree", "Random_forest", "Lasso", "Ridge"],
-            font=("Helvetica", 11),
+            font=("Segoe UI", 11),
             state="readonly"
         )
-        model_menu.grid(row=1, column=1, columnspan=2, sticky="w", padx=5, pady=5)
+        model_menu.grid(row=0, column=1, sticky="we", padx=(10, 20), ipady=3)
+        model_menu.current(0)
 
-        # 预测性质选择标签和选择框
         property_label = tk.Label(
-            root,
-            text="Select Property:",
-            font=("Helvetica", 12),
-            bg="#f0f4f8",
-            fg="#333"
+            controls,
+            text="Select Property",
+            font=("Segoe UI", 11, "bold"),
+            bg="#ffffff",
+            fg="#53618a"
         )
-        property_label.grid(row=1, column=2, padx=5, sticky="e")
+        property_label.grid(row=0, column=2, sticky="w")
 
         self.property_var = tk.StringVar(value="Hydrogen Bond Length")
         property_menu = ttk.Combobox(
-            root,
+            controls,
             textvariable=self.property_var,
-            values=["Hydrogen Bond Length"],  # 当前只包含一个选项
-            font=("Helvetica", 11),
+            values=["Hydrogen Bond Length"],
+            font=("Segoe UI", 11),
             state="readonly"
         )
-        property_menu.grid(row=1, column=3, sticky="w", padx=5, pady=5)
+        property_menu.grid(row=0, column=3, sticky="we", padx=(10, 0), ipady=3)
 
-        # 运行预测按钮
+        actions = tk.Frame(container, bg="#ffffff")
+        actions.pack(fill="x", padx=30, pady=(0, 20))
+
+        import_btn = tk.Button(
+            actions,
+            text="Import Data",
+            command=self.import_data,
+            bg="#38b000",
+            fg="#ffffff",
+            activebackground="#2d8c00",
+            activeforeground="#ffffff",
+            **button_base
+        )
+        import_btn.pack(side="left", padx=(0, 15))
+
         predict_btn = tk.Button(
-            root,
+            actions,
             text="Run Prediction",
             command=self.run_prediction,
-            font=("Helvetica", 12),
-            bg="#2196F3",
-            fg="white",
-            padx=10,
-            pady=5
+            bg="#0078ff",
+            fg="#ffffff",
+            activebackground="#005fcc",
+            activeforeground="#ffffff",
+            **button_base
         )
-        predict_btn.grid(row=2, column=1, pady=10, padx=5)
+        predict_btn.pack(side="left", padx=15)
 
-        # 导出结果按钮
         export_btn = tk.Button(
-            root,
+            actions,
             text="Export Results",
             command=self.export_results,
-            font=("Helvetica", 12),
-            bg="#FF5722",
-            fg="white",
-            padx=10,
-            pady=5
+            bg="#ff6f3c",
+            fg="#ffffff",
+            activebackground="#e85a26",
+            activeforeground="#ffffff",
+            **button_base
         )
-        export_btn.grid(row=2, column=2, pady=10, padx=5)
+        export_btn.pack(side="left", padx=15)
 
-        # 预测结果显示区域
-        self.result_label = tk.Label(
-            root,
-            text="Predictions will be displayed here",
-            font=("Helvetica", 10),
-            bg="#e0e0e0",
-            fg="#333",
-            relief="sunken",
-            height=8,
-            width=60,
-            anchor="nw",
-            justify="left",
-            padx=5,
-            pady=5
+        results_frame = tk.Frame(container, bg="#ffffff")
+        results_frame.pack(fill="both", expand=True, padx=30, pady=(10, 25))
+        results_frame.grid_rowconfigure(1, weight=1)
+        results_frame.grid_columnconfigure(0, weight=1)
+
+        results_label = tk.Label(
+            results_frame,
+            text="Predictions",
+            font=("Segoe UI", 12, "bold"),
+            bg="#ffffff",
+            fg="#1f3c88"
         )
-        self.result_label.grid(row=3, column=0, columnspan=3, pady=10, padx=5)
+        results_label.grid(row=0, column=0, sticky="w", pady=(0, 8))
+
+        tree_style = ttk.Style()
+        tree_style.configure(
+            "Prediction.Treeview",
+            font=("Segoe UI", 10),
+            rowheight=28,
+            background="#f7f9fd",
+            fieldbackground="#f7f9fd"
+        )
+        tree_style.configure("Prediction.Treeview.Heading", font=("Segoe UI", 11, "bold"))
+
+        columns = ("formula", "predicted", "spacegroup")
+        self.result_tree = ttk.Treeview(
+            results_frame,
+            columns=columns,
+            show="headings",
+            selectmode="none",
+            style="Prediction.Treeview"
+        )
+        self.result_tree.heading("formula", text="formula")
+        self.result_tree.heading("predicted", text="Predicted H_length")
+        self.result_tree.heading("spacegroup", text="spacegroup.number")
+        self.result_tree.column("formula", width=200, anchor="w")
+        self.result_tree.column("predicted", width=180, anchor="center")
+        self.result_tree.column("spacegroup", width=160, anchor="center")
+        self.result_tree.grid(row=1, column=0, sticky="nsew")
+
+        scrollbar = ttk.Scrollbar(results_frame, command=self.result_tree.yview)
+        scrollbar.grid(row=1, column=1, sticky="ns")
+        self.result_tree.configure(yscrollcommand=scrollbar.set)
+        self.result_tree.insert("", "end", values=("No data", "Run prediction to see results", ""))
 
         self.data = None
         self.model = None
+        self.predictions = None
 
     def import_data(self):
         # 打开文件对话框选择CSV文件
@@ -154,13 +213,20 @@ class BorohydridePredictionTool:
             messagebox.showwarning("Error", "Please import data first")
             return
 
-        data_train = pd.read_csv('../data/raw/train_data.csv')
+        train_data_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), '..', 'data', 'raw', 'train_data.csv')
+        )
+        if not os.path.exists(train_data_path):
+            messagebox.showwarning("Error", "Training data file not found")
+            return
+
+        data_train = pd.read_csv(train_data_path)
         features_train = extract_features(data_train)
         target = extract_target(data_train)
 
         # 检查是否选择了模型
         model_name = self.model_var.get()
-        if model_name == "Choose Model":
+        if not model_name:
             messagebox.showwarning("Error", "Please choose a model")
             return
 
@@ -168,13 +234,11 @@ class BorohydridePredictionTool:
         if model_name == "Linear":
             model = train.linear(features_train, target)
         elif model_name == "SVM":
-            # 假设有一个SVM模型训练函数
-            model = train.svm(features_train, self.data['target'])
+            model = train.svm(features_train, target)
         elif model_name == "Decision_tree":
-            # 决策树
-            model = train.decision_tree(features_train, self.data['target'])
+            model = train.decision_tree(features_train, target)
         elif model_name == "Random_forest":
-            model = train.random_forest(features_train, self.data['target'])
+            model = train.random_forest(features_train, target)
         elif model_name == "Lasso":
             model = train.lasso(features_train, target)
         elif model_name == "Ridge":
@@ -188,8 +252,12 @@ class BorohydridePredictionTool:
         self.data['Predicted H_length'] = self.predictions
 
         # 显示前5个预测结果
-        predictions_str = '\n'.join([f'Prediction {i + 1}: {pred}' for i, pred in enumerate(self.predictions)])
-        self.result_label.config(text=f"Predictions:\n{predictions_str}")
+        formulas = self.data['formula'] if 'formula' in self.data.columns else [f"Sample {i + 1}" for i in range(len(self.predictions))]
+        spacegroups = self.data['spacegroup.number'] if 'spacegroup.number' in self.data.columns else ["N/A"] * len(self.predictions)
+
+        self.result_tree.delete(*self.result_tree.get_children())
+        for formula, pred, spacegroup in zip(formulas, self.predictions, spacegroups):
+            self.result_tree.insert("", "end", values=(formula, pred, spacegroup))
 
     def export_results(self):
 
@@ -210,7 +278,10 @@ class BorohydridePredictionTool:
         file_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv")])
         if file_path:
             # 导出包含输入 formula 和预测结果的 CSV 文件
-            self.data[['formula', 'Predicted H_length']].to_csv(file_path, index=False)
+            export_columns = ['formula', 'Predicted H_length']
+            if 'spacegroup.number' in self.data.columns:
+                export_columns.append('spacegroup.number')
+            self.data[export_columns].to_csv(file_path, index=False)
             messagebox.showinfo("Success", f"Results exported to {os.path.basename(file_path)}")
 
 if __name__ == "__main__":
