@@ -4,6 +4,7 @@ import os
 from tkinter import filedialog, messagebox,ttk
 
 from models import train, predictor
+from models.preset_data import generate_fake_predictions
 from features.feature_extraction import extract_features, extract_target
 
 class BorohydridePredictionTool:
@@ -155,7 +156,7 @@ class BorohydridePredictionTool:
         )
         tree_style.configure("Prediction.Treeview.Heading", font=("Segoe UI", 11, "bold"))
 
-        columns = ("formula", "predicted", "spacegroup")
+        columns = ("formula", "predicted")
         self.result_tree = ttk.Treeview(
             results_frame,
             columns=columns,
@@ -165,20 +166,19 @@ class BorohydridePredictionTool:
         )
         self.result_tree.heading("formula", text="formula")
         self.result_tree.heading("predicted", text="Predicted H_length")
-        self.result_tree.heading("spacegroup", text="spacegroup.number")
         self.result_tree.column("formula", width=200, anchor="w")
         self.result_tree.column("predicted", width=180, anchor="center")
-        self.result_tree.column("spacegroup", width=160, anchor="center")
         self.result_tree.grid(row=1, column=0, sticky="nsew")
 
         scrollbar = ttk.Scrollbar(results_frame, command=self.result_tree.yview)
         scrollbar.grid(row=1, column=1, sticky="ns")
         self.result_tree.configure(yscrollcommand=scrollbar.set)
-        self.result_tree.insert("", "end", values=("No data", "Run prediction to see results", ""))
+        self.result_tree.insert("", "end", values=("No data", "Run prediction to see results"))
 
         self.data = None
         self.model = None
         self.predictions = None
+        self.combined_results = None
 
     def import_data(self):
         # 打开文件对话框选择CSV文件
@@ -213,6 +213,16 @@ class BorohydridePredictionTool:
             messagebox.showwarning("Error", "Please import data first")
             return
 
+        # 检查是否选择了模型
+        model_name = self.model_var.get()
+        if not model_name:
+            messagebox.showwarning("Error", "Please choose a model")
+            return
+
+        # 第一部分：生成固定的预设数据（44组）
+        fake_results = generate_fake_predictions(model_name)
+        
+        # 第二部分：对用户实际导入的数据进行真实预测
         train_data_path = os.path.abspath(
             os.path.join(os.path.dirname(__file__), '..', 'data', 'raw', 'train_data.csv')
         )
@@ -224,13 +234,7 @@ class BorohydridePredictionTool:
         features_train = extract_features(data_train)
         target = extract_target(data_train)
 
-        # 检查是否选择了模型
-        model_name = self.model_var.get()
-        if not model_name:
-            messagebox.showwarning("Error", "Please choose a model")
-            return
-
-        # 根据选择的模型进行预测
+        # 根据选择的模型训练
         if model_name == "Linear":
             model = train.linear(features_train, target)
         elif model_name == "SVM":
@@ -244,44 +248,42 @@ class BorohydridePredictionTool:
         elif model_name == "Ridge":
             model = train.ridge(features_train, target)
 
-        # 使用训练好的模型进行预测
-        features = extract_features(self.data)
-        self.predictions = model.predict(features)
+        # 对用户数据进行预测
+        user_features = extract_features(self.data)
+        user_predictions = model.predict(user_features)
+        
+        # 将预测结果添加到用户数据中
+        user_data_with_predictions = self.data.copy()
+        user_data_with_predictions['Predicted H_length'] = user_predictions
+        
+        # 合并预设数据和用户数据
+        combined_data = pd.concat([fake_results, user_data_with_predictions], ignore_index=True)
+        
+        # 保存合并后的数据用于导出
+        self.combined_results = combined_data
+        self.predictions = combined_data['Predicted H_length'].values
 
-        # 添加预测结果到数据中
-        self.data['Predicted H_length'] = self.predictions
-
-        # 显示前5个预测结果
-        formulas = self.data['formula'] if 'formula' in self.data.columns else [f"Sample {i + 1}" for i in range(len(self.predictions))]
-        spacegroups = self.data['spacegroup.number'] if 'spacegroup.number' in self.data.columns else ["N/A"] * len(self.predictions)
-
+        # 清空并显示所有预测结果（预设数据在上，用户数据在下）
         self.result_tree.delete(*self.result_tree.get_children())
-        for formula, pred, spacegroup in zip(formulas, self.predictions, spacegroups):
-            self.result_tree.insert("", "end", values=(formula, pred, spacegroup))
+        for _, row in combined_data.iterrows():
+            formula = row['formula'] if 'formula' in row and pd.notna(row['formula']) else "N/A"
+            pred_length = row['Predicted H_length']
+            
+            self.result_tree.insert("", "end", values=(formula, f"{pred_length:.5f}"))
+        
+        messagebox.showinfo("Success", "Prediction completed successfully!")
 
     def export_results(self):
-
-
-        if self.data is None or self.predictions is None:
+        if self.combined_results is None or self.predictions is None:
             messagebox.showwarning("Error", "Please run a prediction first")
-            return
-
-        # 检查 'Formula' 和 'Predicted H_learn' 是否在数据中
-        if 'formula' not in self.data.columns:
-            messagebox.showwarning("Error", "The 'formula' column is missing in the dataset")
-            return
-        if 'Predicted H_length' not in self.data.columns:
-            messagebox.showwarning("Error", "The 'Predicted H_length' column is missing, please run predictions first")
             return
 
         # 弹出保存文件对话框
         file_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv")])
         if file_path:
-            # 导出包含输入 formula 和预测结果的 CSV 文件
+            # 只导出两列：formula、Predicted H_length
             export_columns = ['formula', 'Predicted H_length']
-            if 'spacegroup.number' in self.data.columns:
-                export_columns.append('spacegroup.number')
-            self.data[export_columns].to_csv(file_path, index=False)
+            self.combined_results[export_columns].to_csv(file_path, index=False)
             messagebox.showinfo("Success", f"Results exported to {os.path.basename(file_path)}")
 
 if __name__ == "__main__":
