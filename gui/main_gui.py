@@ -1,7 +1,18 @@
 import pandas as pd
 import tkinter as tk
 import os
+import sys
 from tkinter import filedialog, messagebox,ttk
+
+# 获取应用程序根目录
+def get_resource_path(relative_path):
+    """获取资源文件的绝对路径，适用于PyInstaller打包后的情况"""
+    if hasattr(sys, '_MEIPASS'):
+        # PyInstaller打包后的临时目录
+        return os.path.join(sys._MEIPASS, relative_path)
+    else:
+        # 开发环境下的相对路径
+        return os.path.join(os.path.dirname(__file__), '..', relative_path)
 
 from models import train, predictor
 from models.preset_data import generate_fake_predictions
@@ -223,9 +234,7 @@ class BorohydridePredictionTool:
         fake_results = generate_fake_predictions(model_name)
         
         # 第二部分：对用户实际导入的数据进行真实预测
-        train_data_path = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), '..', 'data', 'raw', 'train_data.csv')
-        )
+        train_data_path = get_resource_path('data/raw/train_data.csv')
         if not os.path.exists(train_data_path):
             messagebox.showwarning("Error", "Training data file not found")
             return
